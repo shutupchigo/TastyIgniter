@@ -299,4 +299,5 @@
   'Admin\\Requests\\WorkingHour' => 'app/admin/requests/WorkingHour.php',
   'Admin\\Controllers\\allergens' => 'app/admin/controllers/allergens.php',
   'Admin\\Controllers\\tables' => 'app/admin/controllers/tables.php',
+  'igniter\\frontend\\Controllers\\sliders' => 'extensions/igniter/frontend/controllers/sliders.php',
 );
