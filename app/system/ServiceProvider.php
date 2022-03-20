@@ -146,7 +146,13 @@ class ServiceProvider extends AppServiceProvider
         });
 
         App::singleton('country', function ($app) {
-            return new Libraries\Country;
+            $country = new Libraries\Country;
+
+            $country->setDefaultFormat("{address_1}\n{address_2}\n{city} {postcode}\n{state}\n{country}", [
+                '{address_1}', '{address_2}', '{city}', '{postcode}', '{state}', '{country}',
+            ]);
+
+            return $country;
         });
 
         App::instance('path.uploads', base_path(Config::get('system.assets.media.path', 'assets/media/uploads')));

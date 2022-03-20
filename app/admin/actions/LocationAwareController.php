@@ -80,7 +80,7 @@ class LocationAwareController extends ControllerAction
         }
 
         if ($this->controller->isClassExtendedWith('Admin\Actions\FormController')) {
-            $this->controller->bindEvent('admin.controller.extendFormQuery', function ($query) {
+            $this->controller->bindEvent('controller.form.extendQuery', function ($query) {
                 if ((bool)$this->getConfig('applyScopeOnFormQuery', TRUE))
                     $this->locationApplyScope($query);
             });

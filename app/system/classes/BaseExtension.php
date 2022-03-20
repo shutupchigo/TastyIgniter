@@ -180,7 +180,7 @@ class BaseExtension extends ServiceProvider
             $config = json_decode(File::get($configFile), TRUE) ?? [];
         }
         elseif (File::exists($configFile = $configPath.'/composer.json')) {
-            $config = ComposerManager::instance()->getConfig($configPath);
+            $config = $this->getConfigFromComposerJson($configFile);
         }
         else {
             throw new SystemException("The configuration file for extension <b>{$className}</b> does not exist. ".
@@ -203,7 +203,7 @@ class BaseExtension extends ServiceProvider
     {
         $composer = json_decode(File::get($configFile), TRUE) ?? [];
 
-        if (!$config = array_get($composer, 'extra.tastyigniter-extension', []))
+        if (!$config = array_get($composer, 'extra.tastyigniter-extension', array_get($composer, 'extra.tastyigniter-theme', [])))
             return $config;
 
         if (array_key_exists('description', $composer))

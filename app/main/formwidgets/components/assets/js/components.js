@@ -27,12 +27,11 @@
     Components.prototype.loadComponentForm = function ($button) {
         var $container = this.$el.find('.components-container'),
             $component = $button.closest('[data-control="component"]'),
-            componentAlias = $component.data('componentAlias'),
-            componentContext = $button.data('componentContext')
+            componentAlias = $component.data('componentAlias')
 
         new $.ti.recordEditor.modal({
             alias: this.options.alias,
-            recordData: {'context': componentContext, 'alias': componentAlias},
+            recordId: componentAlias,
             onSave: function () {
                 this.hide()
                 $container.animate({

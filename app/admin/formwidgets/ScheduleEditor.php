@@ -3,13 +3,11 @@
 namespace Admin\FormWidgets;
 
 use Admin\Classes\BaseFormWidget;
-use Admin\Models\Locations_model;
 use Admin\Models\Working_hours_model;
 use Admin\Traits\ValidatesForm;
 use Admin\Widgets\Form;
 use Igniter\Flame\Exception\ApplicationException;
 use Igniter\Flame\Location\Models\AbstractLocation;
-use Igniter\Flame\Location\OrderTypes;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleEditor extends BaseFormWidget
@@ -74,7 +72,7 @@ class ScheduleEditor extends BaseFormWidget
         $scheduleCode = post('recordId');
         $scheduleItem = $this->getSchedule($scheduleCode);
 
-        $formTitle = sprintf(lang($this->formTitle), lang($scheduleItem->name));
+        $formTitle = sprintf(lang($this->formTitle), lang('admin::lang.text_'.$scheduleCode));
 
         return $this->makePartial('recordeditor/form', [
             'formRecordId' => $scheduleCode,
@@ -127,15 +125,10 @@ class ScheduleEditor extends BaseFormWidget
         if ($this->schedulesCache)
             return $this->schedulesCache;
 
-        $schedules = collect(OrderTypes::instance()->listOrderTypes())
-            ->prepend(['name' => 'admin::lang.text_opening'], Locations_model::OPENING)
-            ->mapWithKeys(function ($definition, $code) {
-                $scheduleItem = $this->model->createScheduleItem($code);
-                $scheduleItem->name = array_get($definition, 'name');
-
-                return [$code => $scheduleItem];
-            })
-            ->all();
+        $schedules = [];
+        foreach ($this->model->availableWorkingTypes() as $scheduleCode) {
+            $schedules[$scheduleCode] = $this->model->createScheduleItem($scheduleCode);
+        }
 
         return $this->schedulesCache = $schedules;
     }

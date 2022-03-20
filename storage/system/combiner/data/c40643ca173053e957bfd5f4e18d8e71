@@ -1,0 +1,7 @@
+.fixed-table-container .bs-checkbox,.fixed-table-container .no-records-found{text-align:center}.fixed-table-container{position:relative;clear:both;border:1px solid #E3E6EE;border-radius:4px;-webkit-border-radius:4px;-moz-border-radius:4px}
+.fixed-table-footer{border-top:1px solid #E3E6EE}
+.fixed-table-body{overflow-x:auto;overflow-y:auto;height:100%}
+.fixed-table-pagination .pagination-detail,.fixed-table-pagination div.pagination{margin-top:15px;margin-bottom:15px}
+.fixed-table-pagination div.pagination .pagination{margin:0}
+.fixed-table-pagination .page-list .btn-group .btn{padding:6px 15px}
+.fixed-table-loading{display:none;position:absolute;top:42px;right:0;bottom:0;left:0;z-index:99;background-color:#FFF;text-align:center}.bootstrap-table .fixed-table-container .fixed-table-body .fixed-table-loading{background:var(--gray-200)}

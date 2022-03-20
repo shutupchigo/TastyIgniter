@@ -7,7 +7,6 @@ use Admin\Traits\ValidatesForm;
 use Carbon\Carbon;
 use Exception;
 use Igniter\Flame\Exception\ApplicationException;
-use Igniter\Flame\Support\Facades\File;
 use Main\Classes\ThemeManager;
 use System\Classes\ComponentManager as ComponentsManager;
 
@@ -39,8 +38,6 @@ class Components extends BaseFormWidget
     public $addTitle = 'main::lang.components.button_new';
 
     public $editTitle = 'main::lang.components.button_edit';
-
-    public $copyPartialTitle = 'main::lang.components.button_copy_partial';
 
     protected $components = [];
 
@@ -95,22 +92,13 @@ class Components extends BaseFormWidget
 
     public function onLoadRecord()
     {
-        $this->validate(post(), [
-            'alias' => ['string'],
-            'context' => ['required', 'string', 'in:create,edit,partial'],
-        ]);
-
-        $codeAlias = post('alias');
+        $codeAlias = post('recordId');
         $componentObj = $this->makeComponentBy($codeAlias);
-        $context = post('context');
-
-        $formTitle = $context == 'create' ? $this->addTitle : $this->editTitle;
-        if ($context === 'partial')
-            $formTitle = $this->copyPartialTitle;
+        $context = !is_null($codeAlias) ? 'edit' : 'create';
 
         return $this->makePartial('~/app/admin/formwidgets/recordeditor/form', [
             'formRecordId' => $codeAlias,
-            'formTitle' => lang($formTitle),
+            'formTitle' => lang($context == 'create' ? $this->addTitle : $this->editTitle),
             'formWidget' => $this->makeComponentFormWidget($context, $componentObj),
         ]);
     }
@@ -123,9 +111,7 @@ class Components extends BaseFormWidget
             return;
         }
 
-        $this->validate(post(), ['recordId' => ['string']]);
-
-        $isCreateContext = request()->method() === 'POST';
+        $isCreateContext = !strlen(post('recordId'));
         $codeAlias = $isCreateContext
             ? post($this->formField->arrayName.'[componentData][component]')
             : post('recordId');
@@ -136,26 +122,14 @@ class Components extends BaseFormWidget
         if (!$template = $this->getTemplate())
             throw new ApplicationException('Template file not found');
 
-        $partialToOverride = post($this->formField->arrayName.'[componentData][partial]');
+        $this->updateComponent($codeAlias, $isCreateContext, $template);
 
-        if (strlen($partialToOverride)) {
-            $this->overrideComponentPartial($codeAlias, $partialToOverride);
+        flash()->success(sprintf(lang('admin::lang.alert_success'),
+            'Component '.($isCreateContext ? 'added' : 'updated')))->now();
 
-            flash()->success(sprintf(lang('admin::lang.alert_success'),
-                'Component partial copied'
-            ))->now();
-        }
-        else {
-            $this->updateComponent($codeAlias, $isCreateContext, $template);
-
-            flash()->success(sprintf(lang('admin::lang.alert_success'),
-                'Component '.($isCreateContext ? 'added' : 'updated')
-            ))->now();
-
-            $template = $this->getTemplate();
-            $this->formField->value = array_get($template->settings, 'components');
-            $this->controller->setTemplateValue('mTime', $template->mTime);
-        }
+        $template = $this->getTemplate();
+        $this->formField->value = array_get($template->settings, 'components');
+        $this->controller->setTemplateValue('mTime', $template->mTime);
 
         return [
             '#notification' => $this->makePartial('flash'),
@@ -234,7 +208,7 @@ class Components extends BaseFormWidget
     {
         $propertyConfig = $propertyValues = [];
         if ($componentObj) {
-            $propertyConfig = $context === 'edit' ? $this->manager->getComponentPropertyConfig($componentObj) : [];
+            $propertyConfig = $this->manager->getComponentPropertyConfig($componentObj);
             $propertyValues = $this->manager->getComponentPropertyValues($componentObj);
         }
 
@@ -247,14 +221,6 @@ class Components extends BaseFormWidget
         $formConfig['context'] = $context;
 
         $widget = $this->makeWidget('Admin\Widgets\Form', $formConfig);
-
-        $widget->bindEvent('form.extendFields', function ($allFields) use ($widget, $componentObj) {
-            if (!$formField = $widget->getField('partial'))
-                return;
-
-            $this->extendPartialField($formField, $componentObj);
-        });
-
         $widget->bindToController();
 
         return $widget;
@@ -337,39 +303,5 @@ class Components extends BaseFormWidget
 
             return $propertyValue;
         }, $properties);
-    }
-
-    protected function extendPartialField($formField, $componentObj)
-    {
-        $activeTheme = $this->model->getTheme();
-        $themePartialPath = sprintf('%s/%s/%s/', $activeTheme->publicPath, '_partials', $componentObj->alias);
-
-        $formField->comment(sprintf(lang('system::lang.themes.help_override_partial'), $themePartialPath));
-
-        $formField->options(function () use ($componentObj) {
-            return collect(File::glob($componentObj->getPath().'/*.blade.php'))
-                ->mapWithKeys(function ($path) {
-                    return [File::basename($path) => File::basename($path, '.blade.php')];
-                });
-        });
-    }
-
-    protected function overrideComponentPartial($codeAlias, $fileName)
-    {
-        $componentObj = $this->makeComponentBy($codeAlias);
-
-        $activeTheme = $this->model->getTheme();
-        $themePartialPath = sprintf('%s/%s/%s', $activeTheme->path, '_partials', $componentObj->alias);
-
-        if (!File::exists($componentObj->getPath().'/'.$fileName))
-            throw new ApplicationException('The selected component partial does not exist in the component directory');
-
-        if (File::exists($themePartialPath.'/'.$fileName))
-            throw new ApplicationException('The selected component partial already exists in active theme partials directory.');
-
-        if (!File::exists($themePartialPath))
-            File::makeDirectory($themePartialPath, 077, TRUE);
-
-        File::copy($componentObj->getPath().'/'.$fileName, $themePartialPath.'/'.$fileName);
     }
 }

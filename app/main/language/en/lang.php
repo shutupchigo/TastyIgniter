@@ -45,7 +45,6 @@ return [
         'button_new' => 'Add Component',
         'button_edit' => 'Edit Component',
         'button_delete' => 'Delete Component',
-        'button_copy_partial' => 'Override Component Partial',
     ],
 
     'media_manager' => [
